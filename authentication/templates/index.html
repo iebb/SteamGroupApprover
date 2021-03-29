@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="jumbotron text-center">
+    <div class="container">
+        <h2>SYSUPause 验证器</h2>
+    <hr />
+        <p>请先在 Steam 中申请进组，再在此处通过邮件自助审批。如果邮箱地址填写有误，请 3 小时后重试</p>
+        <p>QQ 邮箱会随机拦截部分邮件，如果没有收到请尝试点击右上角【自助查询】【收信查询】取回邮件。</p>
+        <br/>
+        {% if user.is_authenticated %}
+
+        {% if error %}
+
+            <div class="card text-white bg-danger mb-3" style="margin: 0 auto; max-width: 20rem;">
+                <div class="card-body">
+                    <p class="card-text">{{ error|safe }}</p>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if success %}
+
+            <div class="card text-white bg-success mb-3" style="margin: 0 auto; max-width: 20rem;">
+                <div class="card-body">
+                    <p class="card-text">{{ success|safe }}</p>
+                </div>
+            </div>
+        {% endif %}
+        <hr/>
+        <div class="card text-white bg-info mb-3" style="margin: 0 auto; max-width: 20rem;">
+            <div class="card-header">
+                <a href="https://steamcommunity.com/profiles/{{ user.steamid64 }}"
+                   class="btn btn-info btn-sm"><i class="fab fa-steam"></i> {{ user.personaname }}</a>
+                <a href="{% url "auth:logout" %}"
+                   class="btn btn-secondary btn-sm" style="float: right">Logout</a>
+            </div>
+            <div class="card-body">
+              <div class="row g-0">
+                <div class="col-md-3">
+                    <img src="{{ user.avatarmedium }}" class="rounded float-start" style="display: inline-block">
+                </div>
+                <div class="col-md-9">
+                <p class="card-text">
+                    SteamID: {{ user.steamid32 }} <br/>
+                    Location: {{ user.locstatecode }}, {{ user.loccountrycode }} <br/>
+                    Creation: {{ user.time_created_formatted }} <br/>
+                </p>
+                </div>
+              </div>
+            </div>
+        </div>
+
+        <br />
+
+        <form method="POST" action="/{{ suffix }}">
+            {% csrf_token %}
+            <div style="text-align: center">
+                <div style="max-width: 20rem; margin: 0 auto;">
+                    <div class="input-group">
+                        <input type="text"
+                               class="form-control"
+                               name="email_prefix"
+                               value="{{ email_prefix }}"
+                               {% if not user.can_verify_email %}
+                               disabled
+                               {% endif %}
+                        >
+                        <div class="input-group-append">
+                            <span class="input-group-text">@</span>
+                            <select class="input-group-text" name="email_domain">
+                                {% for email_domain in email_domains %}
+                                <option value="{{ email_domain }}">{{ email_domain }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <br/>
+                    {% if user.is_already_in_group %}
+                    <button
+                        class="btn btn-success"
+                        style="float: right"
+                    >
+                        已成功进组
+                    </button>
+                    {% elif user.is_email_verified %}
+                    <a
+                        href="/?action=approve"
+                        class="btn btn-warning"
+                        style="float: right"
+                    >
+                        自助审批进组（需要先申请）
+                    </a>
+                    {% else %}
+                    <button
+                        type="submit"
+                        class="btn btn-info"
+                        style="float: right"
+                    >
+                        发送验证邮件
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+        {% else %}
+            <h4>请先认证你的 Steam 账号</h4>
+            <a type="button"
+            class="btn btn-lg btn-primary"
+            href="{% url "social:begin" "steam" %}">
+            <i class="fab fa-steam"></i> Steam 登录
+            </a>
+        {% endif %}
+        {% if user.is_authenticated %}
+        <br/>
+        <br/>
+        <br/>
+        <a type="button"
+        class="btn btn-lg btn-info"
+        href="https://steamcommunity.com/gid/{{ group_id }}">
+        <i class="fab fa-steam"></i> Steam 群组
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
